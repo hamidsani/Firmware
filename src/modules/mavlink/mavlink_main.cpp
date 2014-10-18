@@ -39,6 +39,11 @@
  * @author Anton Babushkin <anton.babushkin@me.com>
  */
 
+/**********************************************************
+* File is modified by Hamid Sani @ Wasatch Autonomy
+* What does this do?
+* More comments please
+***********************************************************/
 #include <nuttx/config.h>
 #include <stdio.h>
 #include <stdlib.h>
