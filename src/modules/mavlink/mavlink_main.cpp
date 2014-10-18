@@ -89,7 +89,7 @@
 #endif
 static const int ERROR = -1;
 
-#define DEFAULT_DEVICE_NAME	"/dev/ttyS1"
+#define DEFAULT_DEVICE_NAME	"/dev/ttyS2"
 #define MAX_DATA_RATE	20000	// max data rate in bytes/s
 #define MAIN_LOOP_DELAY 10000	// 100 Hz @ 1000 bytes/s data rate
 
@@ -131,7 +131,7 @@ Mavlink::Mavlink() :
 	_streams(nullptr),
 	_mission_manager(nullptr),
 	_parameters_manager(nullptr),
-	_mode(MAVLINK_MODE_NORMAL),
+	_mode(MAVLINK_MODE_CUSTOM),
 	_channel(MAVLINK_COMM_0),
 	_logbuffer {},
 	_total_counter(0),
@@ -142,7 +142,7 @@ Mavlink::Mavlink() :
 	_ftp_on(false),
 	_uart_fd(-1),
 	_baudrate(57600),
-	_datarate(1000),
+	_datarate(10000),
 	_datarate_events(500),
 	_rate_mult(1.0f),
 	_mavlink_param_queue_index(0),
@@ -1184,7 +1184,7 @@ Mavlink::task_main(int argc, char *argv[])
 	int ch;
 	_baudrate = 57600;
 	_datarate = 0;
-	_mode = MAVLINK_MODE_NORMAL;
+	_mode = MAVLINK_MODE_CUSTOM;
 
 	/* work around some stupidity in task_create's argv handling */
 	argc -= 2;
@@ -1207,8 +1207,8 @@ Mavlink::task_main(int argc, char *argv[])
 			break;
 
 		case 'r':
-			_datarate = strtoul(optarg, NULL, 10);
-
+			//_datarate = strtoul(optarg, NULL, 10);
+			_datarate = 10000;
 			if (_datarate < 10 || _datarate > MAX_DATA_RATE) {
 				warnx("invalid data rate '%s'", optarg);
 				err_flag = true;
@@ -1225,8 +1225,8 @@ Mavlink::task_main(int argc, char *argv[])
 //			break;
 
 		case 'm':
-			if (strcmp(optarg, "custom") == 0) {
-				_mode = MAVLINK_MODE_CUSTOM;
+			if (strcmp(optarg, "normal") == 0) {
+				_mode = MAVLINK_MODE_NORMAL;
 
 			} else if (strcmp(optarg, "camera") == 0) {
 				// left in here for compatibility
@@ -1270,7 +1270,8 @@ Mavlink::task_main(int argc, char *argv[])
 
 	if (_datarate == 0) {
 		/* convert bits to bytes and use 1/2 of bandwidth by default */
-		_datarate = _baudrate / 20;
+		// _datarate = _baudrate / 20;
+		_datarate = 10000;
 	}
 
 	if (_datarate > MAX_DATA_RATE) {
@@ -1405,7 +1406,10 @@ Mavlink::task_main(int argc, char *argv[])
 		configure_stream("GLOBAL_POSITION_INT", 50.0f);
 		configure_stream("CAMERA_CAPTURE", 2.0f);
 		break;
-
+	case MAVLINK_MODE_CUSTOM:
+		configure_stream("SYS_STATUS", 1.0f);
+		configure_stream("HIGHRES_IMU", 100.0f);
+		break;
 	default:
 		break;
 	}
@@ -1623,7 +1627,7 @@ Mavlink::start(int argc, char *argv[])
 	// when the started task exits.
 	task_spawn_cmd(buf,
 		       SCHED_DEFAULT,
-		       SCHED_PRIORITY_DEFAULT,
+		       SCHED_PRIORITY_MAX - 6,
 		       2700,
 		       (main_t)&Mavlink::start_helper,
 		       (const char **)argv);

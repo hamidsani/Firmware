@@ -38,7 +38,7 @@
  *
  * @author Tobias Naegeli <naegelit@student.ethz.ch>
  * @author Lorenz Meier <lm@inf.ethz.ch>
- */
+ */ 
 
 #include <nuttx/config.h>
 #include <unistd.h>
